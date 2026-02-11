@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "ClimaDrone",
-    "slug": "ClimaDrone",
+    "slug": "climadrone",
+    "owner": "mssolutions2025",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,17 +14,38 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.climadrone.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#2bc15e"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET"
+      ],
+      "package": "com.climadrone.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir que o ClimaDrone acesse sua localização para fornecer condições climáticas e de voo precisas."
+        }
+      ]
+    ],
+    "scheme": "climadrone",
+    "extra": {
+      "eas": {
+        "projectId": "4d644004-7b1e-437d-b296-51fb6f372246"
+      }
     }
   }
 }

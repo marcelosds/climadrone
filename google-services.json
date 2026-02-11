@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "325954666614",
+    "project_id": "climadrone-937bc",
+    "storage_bucket": "climadrone-937bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:325954666614:android:7187df09954be281f8df57",
+        "android_client_info": {
+          "package_name": "com.climadrone.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "325954666614-bdqu2umjmcpila5nrpgslqb3304dll3l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.climadrone.app",
+            "certificate_hash": "5872319c9b323f85c4341fb22d2a9bfe7e8aeea6"
+          }
+        },
+        {
+          "client_id": "325954666614-uali9lrj7du5plf8iov8co6a3ld23ikt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvbLAXOirE8Vbg_hJ6n4YMlr5hG2wkXpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "325954666614-uali9lrj7du5plf8iov8co6a3ld23ikt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
