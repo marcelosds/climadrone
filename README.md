@@ -284,3 +284,4 @@ Contribuições são bem-vindas! Por favor, abra uma issue ou pull request.
 ## 📞 Suporte
 
 Para suporte, entre em contato através das issues do GitHub.
+"# climadrone" 
