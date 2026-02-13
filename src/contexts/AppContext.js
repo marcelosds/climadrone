@@ -232,11 +232,11 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const signInWithGoogleCredential = async (idToken, accessToken) => {
+  const signInWithGoogleCredential = async (idToken) => {
     if (!auth) throw new Error('Auth não inicializado');
     logger.info('Auth', 'Login com Google iniciado');
     try {
-      const cred = GoogleAuthProvider.credential(idToken, accessToken);
+      const cred = GoogleAuthProvider.credential(idToken);
       const res = await signInWithCredential(auth, cred);
       setUser(res.user);
       logger.success('Auth', 'Login com Google concluído', { uid: res.user.uid, email: res.user.email });

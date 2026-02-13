@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useApp } from '../contexts/AppContext';
@@ -39,44 +38,36 @@ const LoginScreen = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const googleCfg = Constants?.expoConfig?.extra?.googleOAuth || {};
-  const scheme = Constants?.expoConfig?.scheme || 'climadrone';
   const firebaseCfg = Constants?.expoConfig?.extra?.firebase || {};
 
-  const buildProfile = Constants?.expoConfig?.extra?.buildProfile;
-  const usingProxy = buildProfile ? buildProfile === 'development' : true;
-  const redirectUri = makeRedirectUri({ scheme, useProxy: usingProxy });
-  logger.info('Login', 'Redirect URI configurado', { uri: redirectUri });
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: googleCfg.androidClientId,
     iosClientId: googleCfg.iosClientId,
     webClientId: googleCfg.webClientId,
     scopes: ['openid', 'profile', 'email'],
-    responseType: 'id_token',
-    selectAccount: true,
-    redirectUri
-  }, { useProxy: usingProxy });
+    selectAccount: true
+  });
 
-  useEffect(() => {
-    const handleGoogleResponse = async () => {
-      if (response?.type === 'success') {
-        try {
-          logger.info('Login', 'Resposta do Google recebida', { type: response?.type });
-          setLocalLoading(true);
-          clearError();
-          const idToken = response.params.id_token;
-          const accessToken = response.authentication?.accessToken;
-          await signInWithGoogleCredential(idToken, accessToken);
-          logger.success('Login', 'Login com Google concluído');
-        } catch (e) {
-          setErrorState('Falha no login com Google');
-          logger.error('Login', 'Falha no login com Google', e?.message);
-        } finally {
-          setLocalLoading(false);
+   useEffect(() => {
+  const handleGoogleResponse = async () => {
+    if (response?.type === 'success') {
+      try {
+        const idToken = response.authentication?.idToken;
+
+        if (!idToken) {
+          setErrorState('Não foi possível obter token do Google');
+          return;
         }
+
+        await signInWithGoogleCredential(idToken);
+      } catch (e) {
+        setErrorState('Falha no login com Google');
       }
-    };
-    handleGoogleResponse();
+    }
+  };
+
+  handleGoogleResponse();
   }, [response]);
 
   const onSignIn = async () => {
@@ -130,12 +121,12 @@ const LoginScreen = () => {
     }
   };
 
-  const onGoogleSignIn = async () => {
-    try {
-      logger.info('Login', 'Prompt do Google iniciado');
-      await promptAsync({ useProxy: usingProxy });
-      logger.info('Login', 'Prompt do Google retornou');
-    } catch {}
+const onGoogleSignIn = async () => {
+  try {
+    await promptAsync();
+  } catch (e) {
+    setErrorState('Erro ao iniciar login Google');
+  }
   };
 
   const onForgotPassword = async () => {

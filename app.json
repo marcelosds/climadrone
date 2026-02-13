@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClimaDrone",
     "slug": "climadrone",
-    "owner": "marcelotkd2010",
+    "owner": "cameraip",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -44,7 +44,7 @@
     "scheme": "climadrone",
     "extra": {
       "eas": {
-        "projectId": "f7acdeeb-71bc-472c-97a6-ccf6935fca33"
+        "projectId": "e7b3d673-441c-4e5c-b053-f481452e0fb4"
       }
     }
   }
