@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import MapView, { Marker, Circle, Polygon, PROVIDER_GOOGLE, enableLatestRenderer } from 'react-native-maps';
 import logger from '../utils/logger';
 import { useOpenAipAirspace } from '../hooks/useOpenAipAirspace';
+import { useApp } from '../contexts/AppContext';
 try { enableLatestRenderer(); } catch (e) {}
 
 const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref) => {
@@ -55,10 +56,26 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
 
   const [mapError, setMapError] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapType, setMapType] = useState('terrain');
+  const [showTraffic, setShowTraffic] = useState(true);
+  const [showPoi, setShowPoi] = useState(true);
   const [selected, setSelected] = useState(null);
   const googleKey = Constants?.expoConfig?.extra?.googleMapsApiKey;
+  const ownership = Constants?.appOwnership; // 'expo' (Expo Go), 'guest' (Dev Client), 'standalone' (Prod)
   const { airspaces, loading: airLoading, error: airError, fetchDebounced, limitsToText } = useOpenAipAirspace();
   const regionRef = useRef(null);
+  const { settings } = useApp();
+
+  if (Platform.OS === 'android' && ownership === 'expo') {
+    return (
+      <View style={[styles.container, styles.fallback]}>
+        <Text style={styles.fallbackTitle}>Mapa indisponível no Expo Go</Text>
+        <Text style={styles.fallbackText}>
+          Use um Development Build (expo start --dev-client) ou uma build Preview/Produção.
+        </Text>
+      </View>
+    );
+  }
 
   if (Platform.OS === 'android' && !googleKey) {
     return (
@@ -84,17 +101,17 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
         ref={ref}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        mapType="terrain"
+        mapType={mapType}
         showsUserLocation={true}
         showsMyLocationButton={true}
         showsCompass={true}
         zoomControlEnabled={true}
         toolbarEnabled={true}
-        showsTraffic={true}
+        showsTraffic={showTraffic}
         showsBuildings={true}
         showsIndoors={true}
         showsIndoorLevelPicker={true}
-        showsPointsOfInterest={true}
+        showsPointsOfInterest={showPoi}
         liteMode={false}
         maxZoomLevel={20}
         initialRegion={initialRegion}
@@ -115,8 +132,12 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
           fetchDebounced(region);
         }}
         onError={(error) => {
-          setMapError(error?.message || 'Erro desconhecido');
-          logger.error('Map', 'Erro ao carregar mapa', error?.message);
+          const msg =
+            error?.nativeEvent?.message ||
+            error?.message ||
+            (typeof error === 'string' ? error : 'Erro desconhecido');
+          setMapError(msg);
+          logger.error('Map', 'Erro ao carregar mapa', msg);
         }}
       >
         <Marker
@@ -134,7 +155,7 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
             latitude: lat,
             longitude: lon,
           }}
-          radius={500}
+          radius={Number(settings?.opAreaRadiusMeters) || 200}
           fillColor="rgba(14, 165, 233, 0.18)"
           strokeColor="#0ea5e9"
           strokeWidth={2}
@@ -187,6 +208,38 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
           />
         ))}
       </MapView>
+      <View style={styles.controls}>
+        <View style={styles.chipsRow}>
+          {['standard','terrain','hybrid','satellite'].map((t) => (
+            <Pressable
+              key={t}
+              style={[styles.chip, mapType === t ? styles.chipActive : null]}
+              onPress={() => setMapType(t)}
+            >
+              <Text style={[styles.chipText, mapType === t ? styles.chipTextActive : null]}>
+                {t === 'standard' ? 'Padrão' : t === 'terrain' ? 'Terreno' : t === 'hybrid' ? 'Híbrido' : 'Satélite'}
+              </Text>
+            </Pressable>
+          ))}
+          <Pressable
+            style={[styles.chip, showTraffic ? styles.chipActive : null]}
+            onPress={() => setShowTraffic((v) => !v)}
+          >
+            <Text style={[styles.chipText, showTraffic ? styles.chipTextActive : null]}>Tráfego</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.chip, showPoi ? styles.chipActive : null]}
+            onPress={() => setShowPoi((v) => !v)}
+          >
+            <Text style={[styles.chipText, showPoi ? styles.chipTextActive : null]}>POI</Text>
+          </Pressable>
+        </View>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusText}>
+            Espaços aéreos: {airspaces.length}{airLoading ? ' (carregando…)':''}{airError ? ` (erro: ${airError})`:''}
+          </Text>
+        </View>
+      </View>
       {mapError && (
         <View style={styles.overlayError}>
           <Text style={styles.overlayErrorTitle}>Falha ao carregar mapa</Text>
@@ -238,6 +291,46 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 16
+  },
+  controls: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    top: 8
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap'
+  },
+  chip: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 6,
+    marginBottom: 6
+  },
+  chipActive: {
+    backgroundColor: '#2563eb'
+  },
+  chipText: {
+    fontSize: 12,
+    color: '#1f2937'
+  },
+  chipTextActive: {
+    color: '#ffffff'
+  },
+  statusRow: {
+    marginTop: 4
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start'
   },
   overlayError: {
     position: 'absolute',

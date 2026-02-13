@@ -8,12 +8,13 @@ import FlightMap from '../components/FlightMap';
 import AppHeader from '../components/AppHeader';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { COLORS } from '../constants';
+import locationService from '../services/locationService';
 
 const MapScreen = () => {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const { weatherData, location, refreshing, refreshWeather } = useWeather();
-  const { loading, error, clearError } = useApp();
+  const { loading, error, clearError, updateLocation } = useApp();
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef(null);
 
@@ -32,6 +33,36 @@ const MapScreen = () => {
       setMapReady(false);
     }
   }, [location]);
+
+  useEffect(() => {
+    let sub;
+    if (isFocused) {
+      locationService
+        .getLocationUpdates((loc) => {
+          updateLocation(loc);
+          const lat = Number(loc.latitude);
+          const lon = Number(loc.longitude);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            mapRef.current?.animateToRegion(
+              {
+                latitude: lat,
+                longitude: lon,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              },
+              500
+            );
+          }
+        })
+        .then((s) => {
+          sub = s;
+        })
+        .catch(() => {});
+    }
+    return () => {
+      if (sub) sub.remove();
+    };
+  }, [isFocused]);
 
   const onRefresh = () => {
     clearError();

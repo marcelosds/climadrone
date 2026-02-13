@@ -6,13 +6,30 @@ class WeatherService {
   ensureApiKey() {
     if (!WEATHER_API_KEY || WEATHER_API_KEY === 'YOUR_WEATHER_API_KEY') {
       logger.error('Weather', 'OPENWEATHER_API_KEY ausente ou inválida');
-      throw new Error('Missing OpenWeatherMap API key');
+      return false;
     }
+    return true;
   }
 
   async getCurrentWeather(lat, lon) {
     try {
-      this.ensureApiKey();
+      const ok = this.ensureApiKey();
+      if (!ok) {
+        return {
+          temperature: 0,
+          windSpeed: 0,
+          windDirection: 0,
+          windGust: 0,
+          visibility: 10,
+          humidity: 0,
+          pressure: null,
+          weather: { main: 'Unknown', description: 'Indisponível' },
+          clouds: 0,
+          sunrise: new Date(),
+          sunset: new Date(),
+          location: { name: 'Local atual', country: 'BR', lat, lon }
+        };
+      }
       logger.info('Weather', 'Solicitando clima atual', { lat, lon });
       const response = await axios.get(`${WEATHER_API_BASE_URL}/weather`, {
         params: {
@@ -33,13 +50,29 @@ class WeatherService {
       const status = error?.response?.status;
       const data = error?.response?.data;
       logger.error('Weather', 'Erro ao buscar clima atual', { status, data, msg: error?.message });
-      throw new Error('Failed to fetch weather data');
+      return {
+        temperature: 0,
+        windSpeed: 0,
+        windDirection: 0,
+        windGust: 0,
+        visibility: 10,
+        humidity: 0,
+        pressure: null,
+        weather: { main: 'Unknown', description: 'Indisponível' },
+        clouds: 0,
+        sunrise: new Date(),
+        sunset: new Date(),
+        location: { name: 'Local atual', country: 'BR', lat, lon }
+      };
     }
   }
 
   async getForecast(lat, lon) {
     try {
-      this.ensureApiKey();
+      const ok = this.ensureApiKey();
+      if (!ok) {
+        return [];
+      }
       logger.info('Weather', 'Solicitando previsão', { lat, lon });
       const response = await axios.get(`${WEATHER_API_BASE_URL}/forecast`, {
         params: {
@@ -59,7 +92,7 @@ class WeatherService {
       const status = error?.response?.status;
       const data = error?.response?.data;
       logger.error('Weather', 'Erro ao buscar previsão', { status, data, msg: error?.message });
-      throw new Error('Failed to fetch forecast data');
+      return [];
     }
   }
 

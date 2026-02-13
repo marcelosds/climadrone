@@ -42,27 +42,20 @@ const LoginScreen = () => {
   const scheme = Constants?.expoConfig?.scheme || 'climadrone';
   const firebaseCfg = Constants?.expoConfig?.extra?.firebase || {};
 
-  const androidScheme = googleCfg?.androidClientId
-    ? `com.googleusercontent.apps.${String(googleCfg.androidClientId).replace('.apps.googleusercontent.com', '')}`
-    : null;
-  const iosScheme = googleCfg?.iosClientId
-    ? `com.googleusercontent.apps.${String(googleCfg.iosClientId).replace('.apps.googleusercontent.com', '')}`
-    : null;
-
-  const nativeRedirectUri = Platform.select({
-    android: androidScheme ? `${androidScheme}:/oauthredirect` : makeRedirectUri({ scheme, preferLocal: true }),
-    ios: iosScheme ? `${iosScheme}:/oauthredirect` : makeRedirectUri({ scheme, preferLocal: true }),
-    default: makeRedirectUri({ scheme, preferLocal: true })
-  });
+  const buildProfile = Constants?.expoConfig?.extra?.buildProfile;
+  const usingProxy = buildProfile ? buildProfile === 'development' : true;
+  const redirectUri = makeRedirectUri({ scheme, useProxy: usingProxy });
+  logger.info('Login', 'Redirect URI configurado', { uri: redirectUri });
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: googleCfg.androidClientId,
     iosClientId: googleCfg.iosClientId,
     webClientId: googleCfg.webClientId,
+    scopes: ['openid', 'profile', 'email'],
     responseType: 'id_token',
-    redirectUri: nativeRedirectUri,
-    selectAccount: true
-  }, { useProxy: false });
+    selectAccount: true,
+    redirectUri
+  }, { useProxy: usingProxy });
 
   useEffect(() => {
     const handleGoogleResponse = async () => {
@@ -140,7 +133,7 @@ const LoginScreen = () => {
   const onGoogleSignIn = async () => {
     try {
       logger.info('Login', 'Prompt do Google iniciado');
-      await promptAsync();
+      await promptAsync({ useProxy: usingProxy });
       logger.info('Login', 'Prompt do Google retornou');
     } catch {}
   };

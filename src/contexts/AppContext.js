@@ -4,7 +4,8 @@ import StorageService from '../utils/storage';
 import logger from '../utils/logger';
 import Constants from 'expo-constants';
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithCredential, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithCredential, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AppContext = createContext();
 
@@ -25,6 +26,7 @@ export const AppProvider = ({ children }) => {
     maxWindSpeed: DRONE_MODELS['DJI Mini 4K'].maxWindSpeed,
     maxGustSpeed: DRONE_MODELS['DJI Mini 4K'].maxGustSpeed,
     minVisibility: DRONE_MODELS['DJI Mini 4K'].minVisibility,
+    opAreaRadiusMeters: 200,
     autoRefresh: true,
     refreshInterval: 300000 // 5 minutes
   });
@@ -58,7 +60,9 @@ export const AppProvider = ({ children }) => {
       logger.info('Auth', 'Inicializando Firebase', { projectId: cfg?.projectId });
       const app = initializeApp(cfg);
       setFirebaseApp(app);
-      const a = getAuth(app);
+      const a = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage)
+      });
       setAuth(a);
       logger.success('Auth', 'Firebase inicializado');
       onAuthStateChanged(a, (u) => {
@@ -99,6 +103,7 @@ export const AppProvider = ({ children }) => {
     maxWindSpeed: coerceNumber(s?.maxWindSpeed, DRONE_MODELS['DJI Mini 4K'].maxWindSpeed),
     maxGustSpeed: coerceNumber(s?.maxGustSpeed, DRONE_MODELS['DJI Mini 4K'].maxGustSpeed),
     minVisibility: coerceNumber(s?.minVisibility, DRONE_MODELS['DJI Mini 4K'].minVisibility),
+    opAreaRadiusMeters: coerceNumber(s?.opAreaRadiusMeters, 200),
     autoRefresh: coerceBoolean(s?.autoRefresh),
     refreshInterval: coerceNumber(s?.refreshInterval, 300000)
   });
@@ -146,6 +151,7 @@ export const AppProvider = ({ children }) => {
       maxWindSpeed: DRONE_MODELS['DJI Mini 4K'].maxWindSpeed,
       maxGustSpeed: DRONE_MODELS['DJI Mini 4K'].maxGustSpeed,
       minVisibility: DRONE_MODELS['DJI Mini 4K'].minVisibility,
+      opAreaRadiusMeters: 200,
       autoRefresh: true,
       refreshInterval: 300000
     };

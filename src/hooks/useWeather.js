@@ -3,6 +3,7 @@ import { useApp } from '../contexts/AppContext';
 import weatherService from '../services/weatherService';
 import locationService from '../services/locationService';
 import logger from '../utils/logger';
+import StorageService from '../utils/storage';
 
 export const useWeather = () => {
   const { 
@@ -42,7 +43,6 @@ export const useWeather = () => {
     } catch (error) {
       logger.error('Init', 'Erro ao buscar clima', error?.message);
       setErrorState(error.message || 'Failed to fetch weather data');
-      throw error;
     } finally {
       setLoadingState(false);
     }
@@ -67,7 +67,16 @@ export const useWeather = () => {
     } catch (error) {
       logger.error('Init', 'Erro ao obter localização e clima', error?.message);
       setErrorState(error.message || 'Failed to get location and weather data');
-      throw error;
+      try {
+        const cachedWeather = await StorageService.getLastWeatherData();
+        const cachedLocation = await StorageService.getLastLocation();
+        if (cachedWeather) {
+          updateWeatherData(cachedWeather);
+          if (cachedLocation) updateLocation(cachedLocation);
+          logger.warn('Init', 'Usando dados locais em cache');
+          return { location: cachedLocation, weather: cachedWeather };
+        }
+      } catch {}
     } finally {
       setLoadingState(false);
     }
@@ -97,6 +106,13 @@ export const useWeather = () => {
     } catch (error) {
       logger.error('Init', 'Erro ao atualizar clima', error?.message);
       setErrorState(error.message || 'Failed to refresh weather data');
+      try {
+        const cachedWeather = await StorageService.getLastWeatherData();
+        if (cachedWeather) {
+          updateWeatherData(cachedWeather);
+          logger.warn('Init', 'Usando dados locais em cache (refresh)');
+        }
+      } catch {}
     } finally {
       setRefreshing(false);
     }
@@ -110,7 +126,6 @@ export const useWeather = () => {
     } catch (error) {
       logger.error('Init', 'Erro ao buscar clima para localização', error?.message);
       setErrorState(error.message || 'Failed to get weather data for location');
-      throw error;
     }
   }, [fetchWeatherData, setErrorState]);
 

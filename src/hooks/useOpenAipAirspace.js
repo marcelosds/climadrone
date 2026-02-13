@@ -148,11 +148,13 @@ export const useOpenAipAirspace = () => {
     } catch (e) {
       const status = e?.response?.status;
       if (!apiKey) {
-        setError('API key ausente. Configure EXPO_PUBLIC_OPENAIP_API_KEY.');
-      } else if (status === 401 || status === 403) {
+        setLoading(false);
+        return;
+      }
+      if (status === 401 || status === 403) {
         setError('Chave de API inválida ou sem permissão (401/403).');
       } else {
-        setError(e?.message || 'Falha ao carregar airspaces');
+        setError(e?.message || 'Falha ao carregar espaço aéreo');
       }
       setLoading(false);
     }

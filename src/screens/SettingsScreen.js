@@ -17,6 +17,9 @@ const SettingsScreen = () => {
     setLocalSettings(newSettings);
     updateSettings(newSettings);
   };
+  const RADII = [0, 100, 200, 300, 400, 500];
+  const radius = Number(localSettings?.opAreaRadiusMeters) || 200;
+  const setRadius = (val) => handleSettingChange('opAreaRadiusMeters', val);
 
   const handleDroneModelChange = (model) => {
     const drone = DRONE_MODELS[model];
@@ -107,6 +110,28 @@ const SettingsScreen = () => {
       {/* Limits Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Limites</Text>
+        
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Raio da área de operação (m)</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scaleContainer}
+          >
+            {RADII.map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[
+                  styles.scaleItem,
+                  radius === r && styles.scaleItemSelected
+                ]}
+                onPress={() => setRadius(r)}
+              >
+                <Text style={[styles.scaleItemText, radius === r && styles.scaleItemTextSelected]}>{r}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
         
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Limite máximo de vento (km/h)</Text>
@@ -399,6 +424,30 @@ const styles = StyleSheet.create({
   },
   optionRow: {
     flexDirection: 'row',
+  },
+  scaleContainer: {
+    paddingVertical: 8
+  },
+  scaleItem: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: COLORS.background
+  },
+  scaleItemSelected: {
+    backgroundColor: COLORS.conditionsAccent,
+    borderColor: COLORS.conditionsAccent
+  },
+  scaleItemText: {
+    fontSize: 14,
+    color: COLORS.text,
+    fontWeight: '600'
+  },
+  scaleItemTextSelected: {
+    color: COLORS.surface
   },
   inputGroup: {
     marginBottom: 16,

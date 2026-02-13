@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClimaDrone",
     "slug": "climadrone",
-    "owner": "mssolutions2025",
+    "owner": "marcelotkd2010",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -44,7 +44,7 @@
     "scheme": "climadrone",
     "extra": {
       "eas": {
-        "projectId": "4d644004-7b1e-437d-b296-51fb6f372246"
+        "projectId": "f7acdeeb-71bc-472c-97a6-ccf6935fca33"
       }
     }
   }
