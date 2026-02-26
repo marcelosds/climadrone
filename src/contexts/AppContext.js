@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithCredential, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import locationService from '../services/locationService';
 
 const AppContext = createContext();
 
@@ -48,6 +49,18 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const res = await StorageService.runMigrations?.();
+        if (res?.weatherDateFix) logger.success('Storage', 'Migração aplicada: limpeza de cache de clima');
+        if (res?.locationCleared) logger.success('Storage', 'Migração aplicada: limpeza de última localização');
+      } catch (e) {
+        logger.error('Storage', 'Falha ao executar migrações', e?.message);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     try {
       const cfg = Constants?.expoConfig?.extra?.firebase;
       const required = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
@@ -77,6 +90,19 @@ export const AppProvider = ({ children }) => {
       logger.error('Auth', 'Falha ao inicializar Firebase', e?.message);
     }
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (user) {
+        try {
+          const loc = await locationService.getCurrentLocation();
+          updateLocation(loc);
+        } catch (e) {
+          logger.warn('Location', 'Autoativação após login falhou', e?.message);
+        }
+      }
+    })();
+  }, [user]);
 
   useEffect(() => {
     (async () => {

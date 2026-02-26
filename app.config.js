@@ -32,7 +32,7 @@ module.exports = ({ config }) => {
     ...config,
     name: "ClimaDrone",
     slug: "climadrone",
-    owner: "cameraip",
+    owner: "solucoesms",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
@@ -63,7 +63,7 @@ module.exports = ({ config }) => {
     scheme: "com.climadrone.app",
     extra: {
       eas: {
-        projectId: "e7b3d673-441c-4e5c-b053-f481452e0fb4"
+        projectId: "72545dd8-efa2-422f-842a-f44a9ba6e188"
       },
       buildProfile: process.env.EAS_BUILD_PROFILE || null,
       googleMapsApiKey,

@@ -3,8 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../constants';
 import { assessFlightConditions } from '../utils/flightAssessment';
 
-const FlightConditionCard = ({ weatherData, settings, convertWindSpeed }) => {
+const FlightConditionCard = ({ weatherData, settings, convertWindSpeed, kpData }) => {
   if (!weatherData) return null;
+
+  const kpVal = typeof kpData?.value === 'number' ? kpData.value : null;
 
   // Garantir que os dados tenham os campos necessários
   const safeWeatherData = {
@@ -14,13 +16,29 @@ const FlightConditionCard = ({ weatherData, settings, convertWindSpeed }) => {
     visibility: weatherData.visibility || 10,
     clouds: weatherData.clouds || 0,
     weather: weatherData.weather || { main: 'Clear', description: 'Céu limpo' },
-    ...weatherData
+    ...weatherData,
+    kpIndex: kpVal
   };
 
   const assessment = assessFlightConditions(safeWeatherData, settings, settings.droneModel);
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
+
+  let kpLabel = null;
+  let kpColor = null;
+  if (kpVal !== null) {
+    if (kpVal < 3) {
+      kpLabel = 'Bom para voo';
+      kpColor = COLORS.success;
+    } else if (kpVal < 5) {
+      kpLabel = 'Voo com cuidado';
+      kpColor = COLORS.warning;
+    } else {
+      kpLabel = 'Ruim para voo';
+      kpColor = COLORS.danger;
+    }
+  }
 
   return (
     <View style={[styles.container, { borderColor: assessment.color }]}>
@@ -42,6 +60,15 @@ const FlightConditionCard = ({ weatherData, settings, convertWindSpeed }) => {
       )}
 
       <View style={styles.detailsContainer}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Índice Kp:</Text>
+          <Text style={styles.detailValue}>
+            {kpVal !== null
+              ? `${kpVal.toFixed(1)}${kpData?.time ? ` (${new Date(kpData.time).toUTCString().slice(17,22)} UTC)` : ''}`
+              : '—'}
+            {kpLabel ? <Text style={[styles.kpBadge, { color: kpColor }]}>{` • ${kpLabel}`}</Text> : null}
+          </Text>
+        </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Vento:</Text>
           <Text style={styles.detailValue}>
@@ -141,6 +168,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
+  },
+  kpBadge: {
+    marginLeft: 6,
   },
 });
 

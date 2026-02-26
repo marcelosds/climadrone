@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, Alert, Platform, AppState, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -9,6 +9,7 @@ import { COLORS } from '../constants';
 import logger from '../utils/logger';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 const PALETTE = {
   bgTop: '#5EA6F0',
@@ -36,6 +37,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [gpsPromptShown, setGpsPromptShown] = useState(false);
 
   const googleCfg = Constants?.expoConfig?.extra?.googleOAuth || {};
   const firebaseCfg = Constants?.expoConfig?.extra?.firebase || {};
@@ -69,6 +71,45 @@ const LoginScreen = () => {
 
   handleGoogleResponse();
   }, [response]);
+
+  useEffect(() => {
+    const checkGps = async () => {
+      try {
+        const enabled = await Location.hasServicesEnabledAsync();
+        if (!enabled && !gpsPromptShown) {
+          setGpsPromptShown(true);
+          Alert.alert(
+            'Localização desativada',
+            'Para continuar, ative a localização do dispositivo.',
+            [
+              {
+                text: 'Abrir configurações',
+                onPress: async () => {
+                  try { await Linking.openSettings(); } catch {}
+                  setGpsPromptShown(false);
+                }
+              },
+              {
+                text: 'Tentar novamente',
+                onPress: () => {
+                  setGpsPromptShown(false);
+                  setTimeout(checkGps, 800);
+                }
+              }
+            ],
+            { cancelable: true }
+          );
+        }
+      } catch {}
+    };
+    checkGps();
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') checkGps();
+    });
+    return () => {
+      try { sub?.remove?.(); } catch {}
+    };
+  }, [gpsPromptShown]);
 
   const onSignIn = async () => {
     try {

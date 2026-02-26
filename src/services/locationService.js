@@ -18,12 +18,30 @@ class LocationService {
     }
   }
 
+  async ensureServicesEnabled() {
+    try {
+      const enabled = await Location.hasServicesEnabledAsync();
+      if (!enabled) {
+        logger.warn('Location', 'Serviços de localização desativados');
+      }
+      return enabled;
+    } catch (e) {
+      logger.error('Location', 'Falha ao verificar serviços de localização', e?.message);
+      return false;
+    }
+  }
+
   async getCurrentLocation() {
     try {
       const hasPermission = await this.requestPermissions();
       
       if (!hasPermission) {
-        throw new Error('Location permission not granted');
+        throw new Error('Permissão de localização não concedida');
+      }
+
+      const servicesOn = await this.ensureServicesEnabled();
+      if (!servicesOn) {
+        throw new Error('Serviços de localização desativados. Ative a localização do dispositivo e retorne ao app.');
       }
 
       const location = await Location.getCurrentPositionAsync({
@@ -57,7 +75,12 @@ class LocationService {
       const hasPermission = await this.requestPermissions();
       
       if (!hasPermission) {
-        throw new Error('Location permission not granted');
+        throw new Error('Permissão de localização não concedida');
+      }
+
+      const servicesOn = await this.ensureServicesEnabled();
+      if (!servicesOn) {
+        throw new Error('Serviços de localização desativados. Ative a localização do dispositivo e retorne ao app.');
       }
 
       return await Location.watchPositionAsync(

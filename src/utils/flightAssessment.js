@@ -48,6 +48,18 @@ export const assessFlightConditions = (weatherData, settings, droneModel) => {
     issues.push('Cobertura de nuvens muito alta');
   }
 
+  // Geomagnetic activity (Kp index) assessment
+  const kp = typeof weatherData.kpIndex === 'number' ? weatherData.kpIndex : null;
+  if (kp !== null) {
+    if (kp >= 5) {
+      score -= 3;
+      issues.push(`Atividade geomagnética alta (Kp ${kp.toFixed?.(1) ?? kp})`);
+    } else if (kp >= 3) {
+      score -= 1;
+      issues.push(`Atividade geomagnética moderada (Kp ${kp.toFixed?.(1) ?? kp})`);
+    }
+  }
+
   // Determine flight condition based on score
   let condition;
   let color;
@@ -69,6 +81,21 @@ export const assessFlightConditions = (weatherData, settings, droneModel) => {
     color = '#10b981';
     icon = '🟢';
     message = 'Boas condições para voo';
+  }
+
+  // Force severity based on Kp classification (if present)
+  if (kp !== null) {
+    if (kp >= 5) {
+      condition = FLIGHT_CONDITIONS.NOT_RECOMMENDED;
+      color = '#ef4444';
+      icon = '🔴';
+      message = 'Voo não recomendado';
+    } else if (kp >= 3 && condition === FLIGHT_CONDITIONS.GOOD) {
+      condition = FLIGHT_CONDITIONS.CAUTION;
+      color = '#f59e0b';
+      icon = '🟡';
+      message = 'Voo com atenção';
+    }
   }
 
   return {

@@ -8,7 +8,33 @@ const STORAGE_KEYS = {
   USER_AVATAR_URI: '@climadrone_user_avatar_uri'
 };
 
+const MIGRATION_KEYS = {
+  WEATHER_DATE_FIX_V1: '@climadrone_migration_weather_date_fix_v1',
+  LOCATION_CLEAR_V1: '@climadrone_migration_location_clear_v1'
+};
+
 export const StorageService = {
+  async runMigrations() {
+    try {
+      const doneWeather = await AsyncStorage.getItem(MIGRATION_KEYS.WEATHER_DATE_FIX_V1);
+      const doneLocation = await AsyncStorage.getItem(MIGRATION_KEYS.LOCATION_CLEAR_V1);
+      let weatherDateFix = false;
+      let locationCleared = false;
+      if (!doneWeather) {
+        await AsyncStorage.removeItem(STORAGE_KEYS.LAST_WEATHER_DATA);
+        await AsyncStorage.setItem(MIGRATION_KEYS.WEATHER_DATE_FIX_V1, new Date().toISOString());
+        weatherDateFix = true;
+      }
+      if (!doneLocation) {
+        await AsyncStorage.removeItem(STORAGE_KEYS.LAST_LOCATION);
+        await AsyncStorage.setItem(MIGRATION_KEYS.LOCATION_CLEAR_V1, new Date().toISOString());
+        locationCleared = true;
+      }
+      return { weatherDateFix, locationCleared };
+    } catch (error) {
+      return { weatherDateFix: false, locationCleared: false, error: String(error) };
+    }
+  },
   async saveSettings(settings) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
@@ -46,7 +72,18 @@ export const StorageService = {
   async getLastWeatherData() {
     try {
       const weatherData = await AsyncStorage.getItem(STORAGE_KEYS.LAST_WEATHER_DATA);
-      return weatherData ? JSON.parse(weatherData) : null;
+      const parsed = weatherData ? JSON.parse(weatherData) : null;
+      if (parsed) {
+        if (parsed.sunrise) parsed.sunrise = new Date(parsed.sunrise);
+        if (parsed.sunset) parsed.sunset = new Date(parsed.sunset);
+        if (Array.isArray(parsed.forecast)) {
+          parsed.forecast = parsed.forecast.map((f) => ({
+            ...f,
+            time: f?.time ? new Date(f.time) : f?.time
+          }));
+        }
+      }
+      return parsed;
     } catch (error) {
       console.error('Error getting weather data:', error);
       return null;

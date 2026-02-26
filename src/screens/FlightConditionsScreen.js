@@ -10,6 +10,7 @@ import { COLORS } from '../constants';
 import { groupForecastByDay, getDayTabs, calculateDayAverage } from '../utils/forecastUtils';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import kpService from '../services/kpService';
 
 const FlightConditionsScreen = () => {
   const insets = useSafeAreaInsets();
@@ -17,6 +18,7 @@ const FlightConditionsScreen = () => {
   const { settings, loading, error, clearError } = useApp();
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [addressLine, setAddressLine] = useState(null);
+  const [kpData, setKpData] = useState(null);
 
   useEffect(() => {
     if (!weatherData) {
@@ -45,6 +47,20 @@ const FlightConditionsScreen = () => {
     };
     fetchAddress();
   }, [weatherData?.location?.lat, weatherData?.location?.lon]);
+
+  useEffect(() => {
+    const fetchKp = async () => {
+      try {
+        const tabs = getDayTabs();
+        const sel = tabs[selectedDayIndex]?.date || new Date();
+        const data = await kpService.getLatestKpForDate(sel);
+        setKpData(data);
+      } catch {
+        setKpData(null);
+      }
+    };
+    fetchKp();
+  }, [selectedDayIndex]);
   // Agrupar forecast por dia
   const forecastByDay = useMemo(() => {
     if (!weatherData?.forecast) return {};
@@ -174,7 +190,7 @@ const FlightConditionsScreen = () => {
           </View>
         ) : (
           <>
-            <FlightConditionCard weatherData={displayData} settings={settings} convertWindSpeed={convertWindSpeed} />
+            <FlightConditionCard weatherData={displayData} settings={settings} convertWindSpeed={convertWindSpeed} kpData={kpData} />
 
             {/* Linha do tempo com previsão horária */}
             {weatherData?.forecast && (
@@ -233,14 +249,14 @@ const FlightConditionsScreen = () => {
                   <View style={styles.sunTimeRow}>
                     <Text style={styles.sunTimeLabel}>Nascer do Sol</Text>
                     <Text style={styles.sunTimeValue}>
-                      {displayData.sunrise.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(displayData.sunrise).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
                   
                   <View style={styles.sunTimeRow}>
                     <Text style={styles.sunTimeLabel}>Pôr do Sol</Text>
                     <Text style={styles.sunTimeValue}>
-                      {displayData.sunset.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(displayData.sunset).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
                 </View>

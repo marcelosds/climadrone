@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AppState } from 'react-native';
+import * as Location from 'expo-location';
 import { useApp } from '../contexts/AppContext';
 import weatherService from '../services/weatherService';
 import locationService from '../services/locationService';
@@ -13,7 +15,8 @@ export const useWeather = () => {
     updateWeatherData, 
     updateLocation, 
     setLoadingState, 
-    setErrorState 
+    setErrorState,
+    error 
   } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -81,6 +84,45 @@ export const useWeather = () => {
       setLoadingState(false);
     }
   }, [fetchWeatherData, updateLocation, setLoadingState, setErrorState]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (state === 'active') {
+        try {
+          if (!location || !weatherData) {
+            await refreshWeather();
+          }
+        } catch {}
+      }
+    });
+    return () => {
+      try { sub?.remove?.(); } catch {}
+    };
+  }, [location, weatherData, refreshWeather]);
+
+  useEffect(() => {
+    let intervalId;
+    const isServicesDisabled =
+      typeof error === 'string' &&
+      /servi[cç]os de localiza[cç][aã]o desativados|location.+desativad/i.test(error);
+
+    if (isServicesDisabled) {
+      intervalId = setInterval(async () => {
+        try {
+          const enabled = await Location.hasServicesEnabledAsync();
+          if (enabled) {
+            clearInterval(intervalId);
+            setErrorState(null);
+            await refreshWeather();
+          }
+        } catch {}
+      }, 1500);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [error, refreshWeather, setErrorState]);
 
   const refreshWeather = useCallback(async () => {
     try {
