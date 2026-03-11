@@ -14,6 +14,8 @@ module.exports = ({ config }) => {
   const googleOAuthIosClientId =
     process.env.EXPO_PUBLIC_GOOGLE_OAUTH_IOS_CLIENT_ID || process.env.GOOGLE_OAUTH_IOS_CLIENT_ID || null;
   const googleOAuthWebClientId = "325954666614-eddjjgvodoab41am68dv2nd13npv1a3l.apps.googleusercontent.com"
+  const debugEnv = process.env.APP_DEBUG;
+  const debug = debugEnv == null ? true : (debugEnv === 'true' || debugEnv === '1');
   const android = {
     adaptiveIcon: {
       foregroundImage: "./assets/icon.png",
@@ -32,7 +34,7 @@ module.exports = ({ config }) => {
     ...config,
     name: "ClimaDrone",
     slug: "climadrone",
-    owner: "solucoesms",
+    owner: "marcelotkd2010",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
@@ -63,9 +65,10 @@ module.exports = ({ config }) => {
     scheme: "com.climadrone.app",
     extra: {
       eas: {
-        projectId: "72545dd8-efa2-422f-842a-f44a9ba6e188"
+        projectId: "f7acdeeb-71bc-472c-97a6-ccf6935fca33"
       },
       buildProfile: process.env.EAS_BUILD_PROFILE || null,
+      debug,
       googleMapsApiKey,
       openWeatherApiKey,
       openAipApiKey,

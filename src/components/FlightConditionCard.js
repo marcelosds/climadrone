@@ -63,9 +63,7 @@ const FlightConditionCard = ({ weatherData, settings, convertWindSpeed, kpData }
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Índice Kp:</Text>
           <Text style={styles.detailValue}>
-            {kpVal !== null
-              ? `${kpVal.toFixed(1)}${kpData?.time ? ` (${new Date(kpData.time).toUTCString().slice(17,22)} UTC)` : ''}`
-              : '—'}
+            {kpVal !== null ? `${kpVal.toFixed(1)}` : '—'}
             {kpLabel ? <Text style={[styles.kpBadge, { color: kpColor }]}>{` • ${kpLabel}`}</Text> : null}
           </Text>
         </View>

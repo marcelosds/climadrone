@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import MapView, { Marker, Circle, Polygon, PROVIDER_GOOGLE, enableLatestRenderer } from 'react-native-maps';
 import logger from '../utils/logger';
 import { useOpenAipAirspace } from '../hooks/useOpenAipAirspace';
+import { useOpenAipAirports } from '../hooks/useOpenAipAirports';
 import { useApp } from '../contexts/AppContext';
 try { enableLatestRenderer(); } catch (e) {}
 
@@ -19,25 +20,6 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
     );
   }
   
-
-  const warningZones = [
-    {
-      id: 1,
-      name: 'Chapecó Airport',
-      latitude: location.latitude + 0.01,
-      longitude: location.longitude + 0.02,
-      radius: 1000, // 1km radius
-      type: 'airport'
-    },
-    {
-      id: 2,
-      name: 'Área Restrita',
-      latitude: location.latitude - 0.015,
-      longitude: location.longitude - 0.01,
-      radius: 500, // 500m radius
-      type: 'restricted'
-    }
-  ];
 
   // Validar coordenadas
   const lat = Number(location.latitude);
@@ -63,6 +45,7 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
   const googleKey = Constants?.expoConfig?.extra?.googleMapsApiKey;
   const ownership = Constants?.appOwnership; // 'expo' (Expo Go), 'guest' (Dev Client), 'standalone' (Prod)
   const { airspaces, loading: airLoading, error: airError, fetchDebounced, limitsToText } = useOpenAipAirspace();
+  const { airports, loading: aptLoading, error: aptError, fetchDebounced: fetchAirportsDebounced } = useOpenAipAirports();
   const regionRef = useRef(null);
   const { settings } = useApp();
 
@@ -121,6 +104,7 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
           logger.success('Map', 'MapReady');
           regionRef.current = initialRegion;
           fetchDebounced(initialRegion);
+          fetchAirportsDebounced(initialRegion);
         }}
         onMapLoaded={() => {
           setMapLoaded(true);
@@ -130,6 +114,7 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
         onRegionChangeComplete={(region) => {
           regionRef.current = region;
           fetchDebounced(region);
+          fetchAirportsDebounced(region);
         }}
         onError={(error) => {
           const msg =
@@ -163,39 +148,29 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
 
         
 
-        {warningZones.map((zone) => {
-          const zoneLat = Number(zone.latitude);
-          const zoneLon = Number(zone.longitude);
-          const zoneRadius = Number(zone.radius);
-          
-          if (isNaN(zoneLat) || isNaN(zoneLon) || isNaN(zoneRadius)) {
-            return null;
-          }
-          
+        {airports.map((ap) => {
+          const aLat = Number(ap.latitude);
+          const aLon = Number(ap.longitude);
+          if (isNaN(aLat) || isNaN(aLon)) return null;
           return (
-            <React.Fragment key={zone.id}>
+            <React.Fragment key={ap.id}>
               <Circle
-                center={{
-                  latitude: zoneLat,
-                  longitude: zoneLon,
-                }}
-                radius={zoneRadius}
-                fillColor={zone.type === 'airport' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}
-                strokeColor={zone.type === 'airport' ? '#f59e0b' : '#ef4444'}
+                center={{ latitude: aLat, longitude: aLon }}
+                radius={1000}
+                fillColor="rgba(245, 158, 11, 0.2)"
+                strokeColor="#f59e0b"
                 strokeWidth={2}
               />
               <Marker
-                coordinate={{
-                  latitude: zoneLat,
-                  longitude: zoneLon,
-                }}
-                title={zone.name}
-                description={`Zona de aviso - ${zone.type === 'airport' ? 'Aeroporto' : 'Área restrita'}`}
-                pinColor={zone.type === 'airport' ? '#f59e0b' : '#ef4444'}
+                coordinate={{ latitude: aLat, longitude: aLon }}
+                title={ap.name || 'Aeroporto'}
+                description="Zona de aviso - Aeroporto"
+                pinColor="#f59e0b"
               />
             </React.Fragment>
           );
         })}
+
         {airspaces.map((a) => (
           <Polygon
             key={a.id}
@@ -236,7 +211,7 @@ const FlightMap = React.forwardRef(({ location, windDirection, windSpeed }, ref)
         </View>
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>
-            Espaços aéreos: {airspaces.length}{airLoading ? ' (carregando…)':''}{airError ? ` (erro: ${airError})`:''}
+            Espaços aéreos: {airspaces.length}{airLoading ? ' (carregando…)':''}{airError ? ` (erro: ${airError})`:''} • Aeroportos: {airports.length}{aptLoading ? ' (carregando…)':''}{aptError ? ` (erro: ${aptError})`:''}
           </Text>
         </View>
       </View>
